@@ -23,5 +23,11 @@ pipeline {
                         url: 'https://github.com/bhat0155/spring-petclinic.git'
                 }
             }
+
+            stage('Maven Build'){
+                steps {
+                    sh 'mvn compile'
+                }
+            }
         }
 }
