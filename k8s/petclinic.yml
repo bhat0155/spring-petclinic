@@ -1,64 +1,51 @@
+# Deployment
+# tells k8s what to run and how many copies
+
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: petclinic-app # name of deployment inside k8s
+  labels:
+    app: petclinic-app # used to identify and group related objects
+
+spec: # actual config of what we want
+  replicas: 3
+
+  selector:
+    matchLabels:
+      app: petclinic-app # deployment manages pods with this. must match with template
+
+  template: # blueprint of each pod
+    metadata:
+      labels:
+        app: petclinic-app # every pod gets this label. service uses this to find pods and send traffic
+
+    spec:
+      containers:
+        - name: petclinic-app # name of container
+          image: ekampetclinic.azurecr.io/petclinic:latest # docker image to pull from acr
+          ports:
+            - containerPort: 8080 # port springboot listens inside container
+
 ---
+
+# service
+# tells k8s how to expose app to internet
+
 apiVersion: v1
 kind: Service
+
 metadata:
-  name: petclinic
+  name: petclinic-service # name of service inside k8s
+  labels:
+    app: petclinic-app
+
 spec:
-  type: NodePort
+  type: LoadBalancer
   ports:
     - port: 80
       targetPort: 8080
-  selector:
-    app: petclinic
 
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: petclinic
-  labels:
-    app: petclinic
-spec:
-  replicas: 1
   selector:
-    matchLabels:
-      app: petclinic
-  template:
-    metadata:
-      labels:
-        app: petclinic
-    spec:
-      containers:
-        - name: workload
-          image: dsyer/petclinic
-          env:
-            - name: SPRING_PROFILES_ACTIVE
-              value: postgres
-            - name: SERVICE_BINDING_ROOT
-              value: /bindings
-            - name: SPRING_APPLICATION_JSON
-              value: |
-                {
-                  "management.endpoint.health.probes.add-additional-paths": true
-                }
-          ports:
-            - name: http
-              containerPort: 8080
-          livenessProbe:
-            httpGet:
-              path: /livez
-              port: http
-          readinessProbe:
-            httpGet:
-              path: /readyz
-              port: http
-          volumeMounts:
-            - mountPath: /bindings/secret
-              name: binding
-              readOnly: true
-      volumes:
-        - name: binding
-          projected:
-            sources:
-              - secret:
-                  name: demo-db
+    app: petclinic-app
