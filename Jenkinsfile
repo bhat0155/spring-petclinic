@@ -35,5 +35,11 @@ pipeline {
                     sh 'mvn test'
                 }
             }
+
+             stage('Artifact Packaging'){
+                steps {
+                    sh 'mvn package -DskipTests'
+                }
+            }
         }
 }
