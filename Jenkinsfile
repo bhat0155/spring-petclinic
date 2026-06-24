@@ -41,5 +41,22 @@ pipeline {
                     sh 'mvn package -DskipTests'
                 }
             }
+
+             stage('SonarQube Analysis') {
+                  steps {
+                      withSonarQubeEnv('sonarserver') {
+                          withCredentials([string(credentialsId: 'sonar', variable: 'SONAR_TOKEN')]) {
+                              sh """
+                                  mvn sonar:sonar \
+                                  -Dsonar.host.url=https://sonarcloud.io \
+                                  -Dsonar.organization=spring-petclinic-ekam \
+                                  -Dsonar.projectKey=spring-petclinic-ekam_jenkins-cicd \
+                                  -Dsonar.token=\$SONAR_TOKEN \
+                                  -DskipTests
+                              """
+                          }
+                      }
+                  }
+              }
         }
 }
