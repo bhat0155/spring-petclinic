@@ -108,5 +108,31 @@ pipeline {
                   }
               }
 
+              stage('Deploy to AKS') {
+    steps {
+        withCredentials([usernamePassword(
+            credentialsId: 'azure-acr-spn',
+            usernameVariable: 'AZURE_USERNAME',
+            passwordVariable: 'AZURE_PASSWORD'
+        )]) {
+            sh """
+                az login --service-principal \
+                    -u \$AZURE_USERNAME \
+                    -p \$AZURE_PASSWORD \
+                    --tenant ${TENANT_ID}
+
+                az aks get-credentials \
+                    --resource-group ${RG} \
+                    --name ${AKS_NAME} \
+                    --overwrite-existing
+
+                kubectl apply -f k8s/petclinic.yml
+                kubectl rollout restart deployment/petclinic-app
+                kubectl rollout status deployment/petclinic-app --timeout=300s
+            """
+        }
+    }
+}
+
         }
 }
