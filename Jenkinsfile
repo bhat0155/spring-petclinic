@@ -58,5 +58,22 @@ pipeline {
                       }
                   }
               }
+              stage('Quality Gate') {
+                  steps {
+                      withCredentials([string(credentialsId: 'sonar', variable: 'SONAR_TOKEN')]) {
+                          sh """
+                              sleep 15
+                              STATUS=\$(curl -s -u \$SONAR_TOKEN: \
+                                  "https://sonarcloud.io/api/qualitygates/project_status?projectKey=spring-petclinic-ekam_jenkins-cicd" \
+                                  | python3 -c "import sys,json; print(json.load(sys.stdin)['projectStatus']['status'])")
+                              echo "Quality Gate status: \$STATUS"
+                              if [ "\$STATUS" != "OK" ]; then
+                                  echo "Quality Gate FAILED"
+                                  exit 1
+                              fi
+                          """
+                      }
+                  }
+              }
         }
 }
