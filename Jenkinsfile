@@ -75,5 +75,11 @@ pipeline {
                       }
                   }
               }
+              stage('Docker Build'){
+                steps{
+                    script {
+                          docker.build("${IMAGE_NAME}:${IMAGE_TAG}", ".")                    }
+                }
+              }
         }
 }
