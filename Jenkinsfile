@@ -77,7 +77,7 @@ pipeline {
               }
               stage('Docker Build'){
                 steps{
-                    sh "docker build --platform linux/amd64 -t ${IMAGE_NAME}:${IMAGE_TAG} ."
+                    sh "docker buildx build --platform linux/arm64 -t ${IMAGE_NAME}:${IMAGE_TAG} ."
                 }
               }
               stage('Trivy Scan'){
@@ -125,9 +125,16 @@ pipeline {
                     --name ${AKS_NAME} \
                     --overwrite-existing
 
+                kubectl apply -f k8s/db.yml
                 kubectl apply -f k8s/petclinic.yml
                 kubectl rollout restart deployment/petclinic-app
-                kubectl rollout status deployment/petclinic-app --timeout=300s
+                kubectl rollout status deployment/petclinic-app --timeout=300s || {
+                    echo "=== Pod Status ==="
+                    kubectl get pods -l app=petclinic-app
+                    echo "=== Pod Events ==="
+                    kubectl describe pods -l app=petclinic-app | tail -30
+                    exit 1
+                }
             """
         }
     }
