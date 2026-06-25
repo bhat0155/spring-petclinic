@@ -77,8 +77,7 @@ pipeline {
               }
               stage('Docker Build'){
                 steps{
-                    script {
-                          docker.build("${IMAGE_NAME}:${IMAGE_TAG}", "--platform linux/amd64 .")                    }
+                    sh "docker build --platform linux/amd64 -t ${IMAGE_NAME}:${IMAGE_TAG} ."
                 }
               }
               stage('Trivy Scan'){
